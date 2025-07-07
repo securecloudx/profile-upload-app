@@ -39,6 +39,9 @@ export default function ProfileCard() {
     }
 
     try {
+      // Show immediate preview with original file
+      setPreview(URL.createObjectURL(file));
+
       let finalFile = file;
 
       if (compressionEnabled) {
@@ -48,12 +51,13 @@ export default function ProfileCard() {
           useWebWorker: true,
         };
         finalFile = await imageCompression(file, options);
+        // Update preview with compressed file
+        setPreview(URL.createObjectURL(finalFile));
       }
 
       setImage(finalFile);
       setCompressedSize((finalFile.size / 1024).toFixed(1)); // in KB
 
-      setPreview(URL.createObjectURL(finalFile));
       setErrors((prev) => ({ ...prev, image: null }));
     } catch (err) {
       console.error("Image processing failed:", err);
@@ -300,7 +304,7 @@ export default function ProfileCard() {
           >
             <img
               src={uploadUrl || preview}
-              alt="Profile Preview"
+              alt="Profile"
               className={`w-32 h-32 rounded-full object-cover border-4 mx-auto transition-all duration-300 ${
                 darkTheme ? "border-gray-700" : "border-gray-300"
               } ${editing && isDragOver ? "scale-105 opacity-80" : ""}`}
@@ -325,34 +329,53 @@ export default function ProfileCard() {
                 </div>
               </div>
             )}
-          </div>
 
-          {editing && (
-            <>
-              <label
-                className={`block mt-2 text-sm cursor-pointer hover:underline transition-colors duration-200 ${
-                  darkTheme ? "text-blue-400" : "text-blue-600"
-                }`}
-              >
+            {/* Edit Pencil Icon */}
+            {editing && !isDragOver && (
+              <label className="absolute bottom-2 right-2 cursor-pointer">
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
                   className="hidden"
                 />
-                {isDragOver ? "Drop to upload" : "Change photo or drag & drop"}
-              </label>
-
-              {/* Drag and Drop Help Text */}
-              {!isDragOver && (
-                <p
-                  className={`text-xs mt-1 ${
-                    darkTheme ? "text-gray-500" : "text-gray-400"
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    darkTheme
+                      ? "bg-blue-600 hover:bg-blue-700 border-2 border-gray-900"
+                      : "bg-blue-500 hover:bg-blue-600 border-2 border-white"
                   }`}
                 >
-                  Drag image here or click to browse
-                </p>
-              )}
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </div>
+              </label>
+            )}
+          </div>
+
+          {editing && (
+            <>
+              {/* Drag and Drop Help Text */}
+              <p
+                className={`text-xs mt-2 ${
+                  darkTheme ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                {isDragOver
+                  ? "Drop to upload"
+                  : "Click pencil or drag image here"}
+              </p>
 
               {errors.image && (
                 <p
