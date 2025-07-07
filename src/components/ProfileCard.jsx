@@ -4,8 +4,9 @@ export default function ProfileCard() {
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState("/default-avatar.jpg"); // Default image
+  const [preview, setPreview] = useState("/default-avatar.jpg"); // Default image in /public
   const [uploadUrl, setUploadUrl] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -14,15 +15,66 @@ export default function ProfileCard() {
     setPreview(URL.createObjectURL(file));
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!image || !name) {
+  //     alert("Please complete your profile.");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+
+  //   const sasContainerUrl =
+  //     "https://scxsa0425.blob.core.windows.net/profile-upload?sp=cw&st=2025-07-07T15:43:24Z&se=2025-07-07T23:43:24Z&spr=https&sv=2024-11-04&sr=c&sig=8oRo5gYLrcmRD8bvFXhoGcon2pImnTSXDb%2FCNQ%2BuSbI%3D";
+
+  //   const blobName = `${Date.now()}-${image.name}`;
+  //   const uploadUrlWithBlob = `${sasContainerUrl.split("?")[0]}/${blobName}?${sasContainerUrl.split("?")[1]}`;
+
+  //   try {
+  //     const res = await fetch(uploadUrlWithBlob, {
+  //       method: "PUT",
+  //       headers: {
+  //         "x-ms-blob-type": "BlockBlob",
+  //         "Content-Type": image.type,
+  //       },
+  //       body: image,
+  //     });
+
+  //     if (res.ok) {
+  //       setUploadUrl(uploadUrlWithBlob.split("?")[0]); // Remove SAS from final link
+  //       alert("Profile saved successfully!");
+  //     } else {
+  //       alert("Upload failed.");
+  //     }
+  //   } catch (err) {
+  //     console.error("Upload error:", err);
+  //     alert("An error occurred during upload.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!image || !name) return alert("Please complete your profile.");
+  e.preventDefault();
 
-    const sasUrl = "<YOUR_SAS_URL>"; // Replace with real Azure Blob container SAS URL
-    const blobName = `${Date.now()}-${image.name}`;
-    const uploadEndpoint = `${sasUrl}/${blobName}`;
+  if (!image || !name) {
+    alert("Please complete your profile.");
+    return;
+  }
 
-    const res = await fetch(uploadEndpoint, {
+  setLoading(true);
+
+  const sasContainerUrl =
+    "https://scxsa0425.blob.core.windows.net/profile-upload?sp=cw&st=2025-07-07T15:43:24Z&se=2025-07-07T23:43:24Z&spr=https&sv=2024-11-04&sr=c&sig=8oRo5gYLrcmRD8bvFXhoGcon2pImnTSXDb%2FCNQ%2BuSbI%3D";
+
+  const blobName = `${Date.now()}-${image.name}`;
+  const containerUrl = new URL(sasContainerUrl);
+  containerUrl.pathname += `/${blobName}`;
+  const uploadUrlWithBlob = containerUrl.toString();
+
+  try {
+    const res = await fetch(uploadUrlWithBlob, {
       method: "PUT",
       headers: {
         "x-ms-blob-type": "BlockBlob",
@@ -31,13 +83,22 @@ export default function ProfileCard() {
       body: image,
     });
 
-    if (res.ok) {
-      setUploadUrl(uploadEndpoint.split("?")[0]);
-      alert("Profile saved successfully!");
-    } else {
-      alert("Upload failed.");
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Azure Blob response:", errorText);
+      alert("Upload failed:\n" + errorText);
+      return;
     }
-  };
+
+    setUploadUrl(uploadUrlWithBlob.split("?")[0]);
+    alert("Profile saved successfully!");
+  } catch (err) {
+    console.error("Upload error:", err);
+    alert(`Upload failed: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
@@ -75,9 +136,12 @@ export default function ProfileCard() {
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 w-full py-2 rounded font-semibold"
+            disabled={loading}
+            className={`${
+              loading ? "bg-gray-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            } w-full py-2 rounded font-semibold`}
           >
-            Save Profile
+            {loading ? "Saving..." : "Save Profile"}
           </button>
         </form>
 
@@ -92,9 +156,11 @@ export default function ProfileCard() {
             >
               {uploadUrl}
             </a>
+            <img src={uploadUrl} alt="Uploaded" className="mt-2 h-24 rounded-lg mx-auto" />
           </div>
         )}
       </div>
     </div>
   );
 }
+// Note: Ensure you have the necessary CORS settings on your Azure Blob Storage to allow uploads from your domain.
