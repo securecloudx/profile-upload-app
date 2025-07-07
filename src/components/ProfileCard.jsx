@@ -49,7 +49,7 @@ export default function ProfileCard() {
     try {
       // Set the original file size
       setOriginalSize((file.size / 1024).toFixed(1)); // in KB
-      
+
       // Show immediate preview with original file
       setPreview(URL.createObjectURL(file));
 
