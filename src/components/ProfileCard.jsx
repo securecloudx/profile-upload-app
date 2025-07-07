@@ -25,6 +25,9 @@ export default function ProfileCard() {
     // Clear any existing success messages when user uploads a new image
     setErrors((prev) => ({ ...prev, success: null }));
 
+    // Clear the old uploadUrl when selecting a new image
+    setUploadUrl("");
+
     const validTypes = ["image/jpeg", "image/png"];
     if (!validTypes.includes(file.type)) {
       setErrors({ image: "Only JPEG or PNG images are allowed." });
