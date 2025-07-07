@@ -1,13 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import imageCompression from "browser-image-compression";
 import defaultAvatar from "../assets/default-avatar.jpg";
 
 export default function ProfileCard() {
-  const [name, setName] = useState("Jane Doe");
-  const [bio, setBio] = useState("Cloud Security learner on SecureCloudX");
+  // Helper functions for localStorage
+  const loadFromStorage = (key, defaultValue) => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved !== null ? JSON.parse(saved) : defaultValue;
+    } catch (error) {
+      console.warn(`Error loading ${key} from localStorage:`, error);
+      return defaultValue;
+    }
+  };
+
+  const saveToStorage = (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.warn(`Error saving ${key} to localStorage:`, error);
+    }
+  };
+
+  // Initialize state with localStorage values
+  const [name, setName] = useState(() =>
+    loadFromStorage("profileName", "Jane Doe")
+  );
+  const [bio, setBio] = useState(() =>
+    loadFromStorage("profileBio", "Cloud Security learner on SecureCloudX")
+  );
   const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(defaultAvatar);
-  const [uploadUrl, setUploadUrl] = useState("");
+  const [preview, setPreview] = useState(() =>
+    loadFromStorage("profilePreview", defaultAvatar)
+  );
+  const [uploadUrl, setUploadUrl] = useState(() =>
+    loadFromStorage("profileUploadUrl", "")
+  );
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -16,15 +44,122 @@ export default function ProfileCard() {
   const [uploadDuration, setUploadDuration] = useState(null);
   const [originalSize, setOriginalSize] = useState(null);
   const [compressedSize, setCompressedSize] = useState(null);
-  const [darkTheme, setDarkTheme] = useState(true);
-  const [compressionEnabled, setCompressionEnabled] = useState(true);
+  const [darkTheme, setDarkTheme] = useState(() =>
+    loadFromStorage("profileDarkTheme", true)
+  );
+  const [compressionEnabled, setCompressionEnabled] = useState(() =>
+    loadFromStorage("profileCompressionEnabled", true)
+  );
   const [isDragOver, setIsDragOver] = useState(false);
+
+  // Save to localStorage whenever important state changes
+  useEffect(() => {
+    saveToStorage("profileName", name);
+  }, [name]);
+
+  useEffect(() => {
+    saveToStorage("profileBio", bio);
+  }, [bio]);
+
+  useEffect(() => {
+    saveToStorage("profilePreview", preview);
+  }, [preview]);
+
+  useEffect(() => {
+    saveToStorage("profileUploadUrl", uploadUrl);
+  }, [uploadUrl]);
+
+  useEffect(() => {
+    saveToStorage("profileDarkTheme", darkTheme);
+  }, [darkTheme]);
+
+  useEffect(() => {
+    saveToStorage("profileCompressionEnabled", compressionEnabled);
+  }, [compressionEnabled]);
+
+  // Save upload stats to localStorage
+  useEffect(() => {
+    if (uploadDuration) {
+      saveToStorage("profileUploadDuration", uploadDuration);
+    }
+  }, [uploadDuration]);
+
+  useEffect(() => {
+    if (originalSize) {
+      saveToStorage("profileOriginalSize", originalSize);
+    }
+  }, [originalSize]);
+
+  useEffect(() => {
+    if (compressedSize) {
+      saveToStorage("profileCompressedSize", compressedSize);
+    }
+  }, [compressedSize]);
+
+  // Load upload stats on component mount
+  useEffect(() => {
+    const savedUploadDuration = loadFromStorage("profileUploadDuration", null);
+    const savedOriginalSize = loadFromStorage("profileOriginalSize", null);
+    const savedCompressedSize = loadFromStorage("profileCompressedSize", null);
+    const savedSuccessMessage = loadFromStorage("profileSuccessMessage", null);
+
+    if (savedUploadDuration) setUploadDuration(savedUploadDuration);
+    if (savedOriginalSize) setOriginalSize(savedOriginalSize);
+    if (savedCompressedSize) setCompressedSize(savedCompressedSize);
+
+    // Show success message if it was saved recently (within last 5 minutes)
+    if (savedSuccessMessage && savedSuccessMessage.timestamp) {
+      const now = Date.now();
+      const messageAge = now - savedSuccessMessage.timestamp;
+      const fiveMinutes = 5 * 60 * 1000;
+
+      if (messageAge < fiveMinutes) {
+        setErrors({ success: savedSuccessMessage.message });
+      } else {
+        // Remove old success message
+        localStorage.removeItem("profileSuccessMessage");
+      }
+    }
+  }, []);
+
+  // Function to clear all profile data
+  const clearProfileData = () => {
+    const keys = [
+      "profileName",
+      "profileBio",
+      "profilePreview",
+      "profileUploadUrl",
+      "profileDarkTheme",
+      "profileCompressionEnabled",
+      "profileUploadDuration",
+      "profileOriginalSize",
+      "profileCompressedSize",
+      "profileSuccessMessage",
+    ];
+    keys.forEach((key) => localStorage.removeItem(key));
+
+    // Reset to defaults
+    setName("Jane Doe");
+    setBio("Cloud Security learner on SecureCloudX");
+    setPreview(defaultAvatar);
+    setUploadUrl("");
+    setUploadDuration(null);
+    setOriginalSize(null);
+    setCompressedSize(null);
+    setErrors({});
+  };
+
+  // Helper function to clear success messages
+  const clearSuccessMessage = () => {
+    setErrors((prev) => ({ ...prev, success: null }));
+    localStorage.removeItem("profileSuccessMessage");
+  };
 
   const processImageFile = async (file) => {
     if (!file) return;
 
     // Clear any existing success messages when user uploads a new image
-    setErrors((prev) => ({ ...prev, success: null }));
+    clearSuccessMessage();
 
     // Clear the old uploadUrl when selecting a new image
     setUploadUrl("");
@@ -171,7 +306,14 @@ export default function ProfileCard() {
 
     setEditing(false);
     setLoading(false);
-    setErrors({ success: "Profile saved successfully!" });
+    const successMessage = "Profile saved successfully!";
+    setErrors({ success: successMessage });
+
+    // Save success message with timestamp to localStorage
+    saveToStorage("profileSuccessMessage", {
+      message: successMessage,
+      timestamp: Date.now(),
+    });
   };
 
   const uploadWithProgress = (url, file) => {
@@ -267,6 +409,27 @@ export default function ProfileCard() {
               }
             >
               📦
+            </button>
+
+            {/* Reset Profile Button */}
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Are you sure you want to reset all profile data? This action cannot be undone."
+                  )
+                ) {
+                  clearProfileData();
+                }
+              }}
+              className={`p-2 rounded-lg transition-colors duration-200 ${
+                darkTheme
+                  ? "bg-red-800 hover:bg-red-700 text-red-300"
+                  : "bg-red-100 hover:bg-red-200 text-red-600"
+              }`}
+              title="Reset Profile Data"
+            >
+              🗑️
             </button>
           </div>
         </div>
@@ -451,8 +614,7 @@ export default function ProfileCard() {
               onChange={(e) => {
                 setName(e.target.value);
                 if (errors.name) setErrors((prev) => ({ ...prev, name: null }));
-                if (errors.success)
-                  setErrors((prev) => ({ ...prev, success: null }));
+                if (errors.success) clearSuccessMessage();
               }}
               disabled={!editing}
             />
@@ -477,8 +639,7 @@ export default function ProfileCard() {
             value={bio}
             onChange={(e) => {
               setBio(e.target.value);
-              if (errors.success)
-                setErrors((prev) => ({ ...prev, success: null }));
+              if (errors.success) clearSuccessMessage();
             }}
             disabled={!editing}
           />
