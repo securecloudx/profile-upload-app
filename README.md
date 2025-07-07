@@ -62,46 +62,7 @@ npm run dev
 ```
 
 The application will start on `http://localhost:5173`
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-### Preview Production Build
-
-```bash
-npm run preview
-```
-
-### Lint Code
-
-```bash
-npm run lint
-```
-
-## 📁 Project Structure
-
-```
-profile-upload-app/
-├── public/
-│   ├── default-avatar.jpg    # Default profile image
-│   └── vite.svg             # Vite logo
-├── src/
-│   ├── assets/
-│   │   └── react.svg        # React logo
-│   ├── components/
-│   │   └── ProfileCard.jsx  # Main profile component
-│   ├── App.jsx              # Root component
-│   ├── index.css            # Global styles
-│   └── main.jsx             # Application entry point
-├── eslint.config.js         # ESLint configuration
-├── index.html               # HTML template
-├── package.json             # Dependencies and scripts
-├── vite.config.js           # Vite configuration
-└── README.md                # Project documentation
-```
+and you can view it in your browser.
 
 ## 🎯 Key Components
 
@@ -184,10 +145,6 @@ The application includes comprehensive error handling for:
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
