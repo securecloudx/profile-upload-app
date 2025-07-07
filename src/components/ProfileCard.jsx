@@ -68,10 +68,15 @@ export default function ProfileCard() {
   const sasContainerUrl =
     "https://scxsa0425.blob.core.windows.net/profile-upload?sp=cw&st=2025-07-07T15:43:24Z&se=2025-07-07T23:43:24Z&spr=https&sv=2024-11-04&sr=c&sig=8oRo5gYLrcmRD8bvFXhoGcon2pImnTSXDb%2FCNQ%2BuSbI%3D";
 
-  const blobName = `${Date.now()}-${image.name}`;
-  const containerUrl = new URL(sasContainerUrl);
-  containerUrl.pathname += `/${blobName}`;
-  const uploadUrlWithBlob = containerUrl.toString();
+  // const blobName = `${Date.now()}-${image.name}`;
+  // const containerUrl = new URL(sasContainerUrl);
+  // containerUrl.pathname += `/${blobName}`;
+    // const uploadUrlWithBlob = containerUrl.toString();
+    
+    const blobName = `${Date.now()}-${image.name}`.replace(/\s+/g, "-"); // replace spaces
+    const containerUrl = new URL(sasContainerUrl);
+    containerUrl.pathname += `/${blobName}`;
+    const uploadUrlWithBlob = containerUrl.toString();
 
   try {
     const res = await fetch(uploadUrlWithBlob, {
