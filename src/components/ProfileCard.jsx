@@ -12,6 +12,9 @@ export default function ProfileCard() {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [errors, setErrors] = useState({});
+  const [uploadStartTime, setUploadStartTime] = useState(null);
+  const [uploadDuration, setUploadDuration] = useState(null);
+  const [compressedSize, setCompressedSize] = useState(null);
 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
@@ -38,6 +41,8 @@ export default function ProfileCard() {
       };
       const compressedFile = await imageCompression(file, options);
       setImage(compressedFile);
+      setCompressedSize((compressedFile.size / 1024).toFixed(1)); // in KB
+
       setPreview(URL.createObjectURL(compressedFile));
       setErrors((prev) => ({ ...prev, image: null }));
     } catch (err) {
@@ -64,6 +69,9 @@ export default function ProfileCard() {
     }
 
     setLoading(true);
+    setUploadDuration(null);
+    setUploadStartTime(Date.now());
+
     setProgress(0);
 
     let finalImageUrl = uploadUrl;
@@ -111,6 +119,9 @@ export default function ProfileCard() {
 
       xhr.onload = () => {
         if (xhr.status === 201 || xhr.status === 200) {
+          const endTime = Date.now();
+          const duration = ((endTime - uploadStartTime) / 1000).toFixed(1);
+          setUploadDuration(duration);
           resolve();
         } else {
           reject(new Error("Upload failed with status " + xhr.status));
@@ -126,9 +137,15 @@ export default function ProfileCard() {
     <div className="flex-1 flex items-center justify-center p-4">
       <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 w-full max-w-sm text-white text-center">
         {errors.success && (
-          <p className="text-green-400 text-sm text-center mb-4 bg-green-900/20 border border-green-800 rounded-lg py-2 px-3">
-            {errors.success}
-          </p>
+          <div className="text-green-400 text-sm text-center mb-4 bg-green-900/20 border border-green-800 rounded-lg py-3 px-3">
+            <p className="font-medium">{errors.success}</p>
+            {uploadDuration && compressedSize && (
+              <div className="flex justify-between mt-2 text-xs text-green-300">
+                <span>📁 {compressedSize} KB</span>
+                <span>⏱️ {uploadDuration}s</span>
+              </div>
+            )}
+          </div>
         )}
 
         <div className="relative inline-block">
@@ -196,11 +213,22 @@ export default function ProfileCard() {
                 {loading ? "Saving..." : "Save Profile"}
               </button>
               {loading && (
-                <div className="w-full bg-gray-700 h-3 rounded mt-2">
-                  <div
-                    className="bg-green-500 h-3 rounded transition-all duration-200"
-                    style={{ width: `${progress}%` }}
-                  ></div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>Uploading...</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 h-3 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  {compressedSize && (
+                    <div className="text-xs text-gray-400">
+                      File size: {compressedSize} KB
+                    </div>
+                  )}
                 </div>
               )}
             </>
