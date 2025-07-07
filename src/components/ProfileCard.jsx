@@ -11,24 +11,22 @@ export default function ProfileCard() {
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
-
+  const [errors, setErrors] = useState({});
 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // ✅ File type validation
     const validTypes = ["image/jpeg", "image/png"];
     if (!validTypes.includes(file.type)) {
-      alert("Only JPEG or PNG images are allowed.");
+      setErrors({ image: "Only JPEG or PNG images are allowed." });
       return;
     }
 
-    // ✅ File size validation (limit: 2MB)
     const maxSizeMB = 2;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      alert("Image is too large. Max size is 2MB.");
+      setErrors({ image: "Image is too large. Max size is 2MB." });
       return;
     }
 
@@ -41,16 +39,29 @@ export default function ProfileCard() {
       const compressedFile = await imageCompression(file, options);
       setImage(compressedFile);
       setPreview(URL.createObjectURL(compressedFile));
+      setErrors((prev) => ({ ...prev, image: null }));
     } catch (err) {
       console.error("Image compression failed:", err);
-      alert("Image compression failed.");
+      setErrors({ image: "Image compression failed." });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!image && !uploadUrl) return alert("Please upload a profile image.");
-    if (!name) return alert("Please enter your name.");
+
+    let validationErrors = {};
+    if (!name.trim()) validationErrors.name = "Name is required.";
+    if (!image && !uploadUrl)
+      validationErrors.image = "Please upload an image.";
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
     setLoading(true);
     setProgress(0);
@@ -70,9 +81,10 @@ export default function ProfileCard() {
         await uploadWithProgress(uploadUrlWithBlob, image);
         finalImageUrl = uploadUrlWithBlob.split("?")[0];
         setUploadUrl(finalImageUrl);
+        setErrors({});
       } catch (err) {
         console.error("Upload error:", err);
-        alert("Upload failed.");
+        setErrors({ submit: "Upload failed. Please try again." });
         setLoading(false);
         return;
       }
@@ -80,7 +92,7 @@ export default function ProfileCard() {
 
     setEditing(false);
     setLoading(false);
-    alert("Profile saved successfully!");
+    setErrors({ success: "Profile saved successfully!" });
   };
 
   const uploadWithProgress = (url, file) => {
@@ -113,6 +125,12 @@ export default function ProfileCard() {
   return (
     <div className="flex-1 flex items-center justify-center p-4">
       <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 w-full max-w-sm text-white text-center">
+        {errors.success && (
+          <p className="text-green-400 text-sm text-center mb-4 bg-green-900/20 border border-green-800 rounded-lg py-2 px-3">
+            {errors.success}
+          </p>
+        )}
+
         <div className="relative inline-block">
           <img
             src={uploadUrl || preview}
@@ -120,26 +138,42 @@ export default function ProfileCard() {
             className="w-32 h-32 rounded-full object-cover border-4 border-gray-700 mx-auto"
           />
           {editing && (
-            <label className="block mt-2 text-sm text-blue-400 cursor-pointer hover:underline">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-              Change photo
-            </label>
+            <>
+              <label className="block mt-2 text-sm text-blue-400 cursor-pointer hover:underline">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                Change photo
+              </label>
+              {errors.image && (
+                <p className="text-red-400 text-xs mt-1">{errors.image}</p>
+              )}
+            </>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <input
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700 placeholder-gray-400"
-            placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={!editing}
-          />
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4 text-left">
+          <div>
+            <input
+              className={`w-full p-2 rounded bg-gray-800 border ${
+                errors.name ? "border-red-500" : "border-gray-700"
+              } placeholder-gray-400`}
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (errors.name) setErrors((prev) => ({ ...prev, name: null }));
+              }}
+              disabled={!editing}
+            />
+            {errors.name && (
+              <p className="text-red-400 text-xs mt-1">{errors.name}</p>
+            )}
+          </div>
+
           <textarea
             className="w-full p-2 rounded bg-gray-800 border border-gray-700 placeholder-gray-400"
             placeholder="Short Bio"
@@ -164,7 +198,7 @@ export default function ProfileCard() {
               {loading && (
                 <div className="w-full bg-gray-700 h-3 rounded mt-2">
                   <div
-                    className="bg-green-500 h-3 rounded"
+                    className="bg-green-500 h-3 rounded transition-all duration-200"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -181,9 +215,15 @@ export default function ProfileCard() {
           )}
         </form>
 
+        {errors.submit && (
+          <p className="text-red-400 text-sm text-center mt-2">
+            {errors.submit}
+          </p>
+        )}
+
         {uploadUrl && !editing && (
-          <div className="mt-4">
-            <p className="text-green-400 text-sm">Image URL:</p>
+          <div className="mt-4 text-sm">
+            <p className="text-green-400">✅ Image URL:</p>
             <a
               href={uploadUrl}
               target="_blank"
