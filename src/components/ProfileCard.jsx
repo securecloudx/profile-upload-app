@@ -14,6 +14,7 @@ export default function ProfileCard() {
   const [errors, setErrors] = useState({});
   const [uploadStartTime, setUploadStartTime] = useState(null);
   const [uploadDuration, setUploadDuration] = useState(null);
+  const [originalSize, setOriginalSize] = useState(null);
   const [compressedSize, setCompressedSize] = useState(null);
   const [darkTheme, setDarkTheme] = useState(true);
   const [compressionEnabled, setCompressionEnabled] = useState(true);
@@ -31,6 +32,8 @@ export default function ProfileCard() {
     const validTypes = ["image/jpeg", "image/png"];
     if (!validTypes.includes(file.type)) {
       setErrors({ image: "Only JPEG or PNG images are allowed." });
+      setOriginalSize(null);
+      setCompressedSize(null);
       return;
     }
 
@@ -38,10 +41,15 @@ export default function ProfileCard() {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
       setErrors({ image: "Image is too large. Max size is 2MB." });
+      setOriginalSize(null);
+      setCompressedSize(null);
       return;
     }
 
     try {
+      // Set the original file size
+      setOriginalSize((file.size / 1024).toFixed(1)); // in KB
+      
       // Show immediate preview with original file
       setPreview(URL.createObjectURL(file));
 
@@ -69,6 +77,8 @@ export default function ProfileCard() {
           ? "Image compression failed."
           : "Image processing failed.",
       });
+      setOriginalSize(null);
+      setCompressedSize(null);
     }
   };
 
@@ -269,17 +279,50 @@ export default function ProfileCard() {
             }`}
           >
             <p className="font-medium">{errors.success}</p>
-            {uploadDuration && compressedSize && (
+            {uploadDuration && (
               <div
-                className={`flex justify-between mt-2 text-xs ${
+                className={`mt-2 text-xs ${
                   darkTheme ? "text-green-300" : "text-green-600"
                 }`}
               >
-                <span>
-                  📁 {compressedSize} KB{" "}
-                  {!compressionEnabled && "(uncompressed)"}
-                </span>
-                <span>⏱️ {uploadDuration}s</span>
+                <div className="flex justify-between items-center">
+                  <span>⏱️ Upload: {uploadDuration}s</span>
+                </div>
+                {originalSize && compressedSize && (
+                  <div className="mt-1 space-y-1">
+                    {compressionEnabled && originalSize !== compressedSize ? (
+                      <>
+                        <div className="flex justify-between">
+                          <span>📄 Original:</span>
+                          <span>{originalSize} KB</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>📦 Compressed:</span>
+                          <span>{compressedSize} KB</span>
+                        </div>
+                        <div className="flex justify-between font-medium">
+                          <span>💾 Saved:</span>
+                          <span>
+                            {(originalSize - compressedSize).toFixed(1)} KB (
+                            {Math.round(
+                              ((originalSize - compressedSize) / originalSize) *
+                                100
+                            )}
+                            %)
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between">
+                        <span>📁 File size:</span>
+                        <span>
+                          {compressedSize} KB{" "}
+                          {!compressionEnabled && "(uncompressed)"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -515,6 +558,8 @@ export default function ProfileCard() {
                 setErrors({});
                 setUploadDuration(null);
                 setProgress(0);
+                setOriginalSize(null);
+                setCompressedSize(null);
               }}
               className={`w-full py-2 rounded font-semibold cursor-pointer transition-all duration-200 ${
                 darkTheme
