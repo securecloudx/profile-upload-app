@@ -17,9 +17,9 @@ export default function ProfileCard() {
   const [compressedSize, setCompressedSize] = useState(null);
   const [darkTheme, setDarkTheme] = useState(true);
   const [compressionEnabled, setCompressionEnabled] = useState(true);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
+  const processImageFile = async (file) => {
     if (!file) return;
 
     const validTypes = ["image/jpeg", "image/png"];
@@ -37,7 +37,7 @@ export default function ProfileCard() {
 
     try {
       let finalFile = file;
-      
+
       if (compressionEnabled) {
         const options = {
           maxSizeMB: 1,
@@ -46,7 +46,7 @@ export default function ProfileCard() {
         };
         finalFile = await imageCompression(file, options);
       }
-      
+
       setImage(finalFile);
       setCompressedSize((finalFile.size / 1024).toFixed(1)); // in KB
 
@@ -54,8 +54,52 @@ export default function ProfileCard() {
       setErrors((prev) => ({ ...prev, image: null }));
     } catch (err) {
       console.error("Image processing failed:", err);
-      setErrors({ image: compressionEnabled ? "Image compression failed." : "Image processing failed." });
+      setErrors({
+        image: compressionEnabled
+          ? "Image compression failed."
+          : "Image processing failed.",
+      });
     }
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    await processImageFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (editing) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set to false if we're leaving the container, not moving between child elements
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    if (!editing) return; // Only allow drops when editing
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      await processImageFile(files[0]); // Only use the first file
+    }
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const handleSubmit = async (e) => {
@@ -141,15 +185,33 @@ export default function ProfileCard() {
   };
 
   return (
-    <div className={`flex-1 flex items-center justify-center p-4 transition-colors duration-300 ${darkTheme ? 'bg-gray-950' : 'bg-gray-50'}`}>
-      <div className={`rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center transition-all duration-300 ${
-        darkTheme 
-          ? 'bg-gray-900 text-white' 
-          : 'bg-white text-gray-900 border border-gray-200'
-      }`}>
+    <div
+      className={`flex-1 flex items-center justify-center p-4 transition-colors duration-300 ${
+        darkTheme ? "bg-gray-950" : "bg-gray-50"
+      }`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
+      <div
+        className={`rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center transition-all duration-300 ${
+          darkTheme
+            ? "bg-gray-900 text-white"
+            : "bg-white text-gray-900 border border-gray-200"
+        }`}
+      >
         {/* Settings Panel */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className={`text-lg font-semibold ${darkTheme ? 'text-white' : 'text-gray-900'}`}>
+          <h2
+            className={`text-lg font-semibold ${
+              darkTheme ? "text-white" : "text-gray-900"
+            }`}
+          >
             Profile Settings
           </h2>
           <div className="flex gap-2">
@@ -157,70 +219,144 @@ export default function ProfileCard() {
             <button
               onClick={() => setDarkTheme(!darkTheme)}
               className={`p-2 rounded-lg transition-colors duration-200 ${
-                darkTheme 
-                  ? 'bg-gray-800 hover:bg-gray-700 text-yellow-400' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                darkTheme
+                  ? "bg-gray-800 hover:bg-gray-700 text-yellow-400"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-600"
               }`}
-              title={darkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              title={
+                darkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"
+              }
             >
-              {darkTheme ? '☀️' : '🌙'}
+              {darkTheme ? "☀️" : "🌙"}
             </button>
-            
+
             {/* Compression Toggle */}
             <button
               onClick={() => setCompressionEnabled(!compressionEnabled)}
               className={`p-2 rounded-lg transition-colors duration-200 ${
                 compressionEnabled
-                  ? (darkTheme ? 'bg-green-800 hover:bg-green-700 text-green-300' : 'bg-green-100 hover:bg-green-200 text-green-600')
-                  : (darkTheme ? 'bg-gray-800 hover:bg-gray-700 text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-500')
+                  ? darkTheme
+                    ? "bg-green-800 hover:bg-green-700 text-green-300"
+                    : "bg-green-100 hover:bg-green-200 text-green-600"
+                  : darkTheme
+                  ? "bg-gray-800 hover:bg-gray-700 text-gray-400"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-500"
               }`}
-              title={compressionEnabled ? 'Compression: ON' : 'Compression: OFF'}
+              title={
+                compressionEnabled ? "Compression: ON" : "Compression: OFF"
+              }
             >
               📦
             </button>
           </div>
         </div>
         {errors.success && (
-          <div className={`text-sm text-center mb-4 rounded-lg py-3 px-3 ${
-            darkTheme 
-              ? 'text-green-400 bg-green-900/20 border border-green-800' 
-              : 'text-green-700 bg-green-50 border border-green-200'
-          }`}>
+          <div
+            className={`text-sm text-center mb-4 rounded-lg py-3 px-3 ${
+              darkTheme
+                ? "text-green-400 bg-green-900/20 border border-green-800"
+                : "text-green-700 bg-green-50 border border-green-200"
+            }`}
+          >
             <p className="font-medium">{errors.success}</p>
             {uploadDuration && compressedSize && (
-              <div className={`flex justify-between mt-2 text-xs ${
-                darkTheme ? 'text-green-300' : 'text-green-600'
-              }`}>
-                <span>📁 {compressedSize} KB {!compressionEnabled && '(uncompressed)'}</span>
+              <div
+                className={`flex justify-between mt-2 text-xs ${
+                  darkTheme ? "text-green-300" : "text-green-600"
+                }`}
+              >
+                <span>
+                  📁 {compressedSize} KB{" "}
+                  {!compressionEnabled && "(uncompressed)"}
+                </span>
                 <span>⏱️ {uploadDuration}s</span>
               </div>
             )}
           </div>
         )}
 
-        <div className="relative inline-block">
-          <img
-            src={uploadUrl || preview}
-            alt="Profile Preview"
-            className={`w-32 h-32 rounded-full object-cover border-4 mx-auto transition-colors duration-300 ${
-              darkTheme ? 'border-gray-700' : 'border-gray-300'
+        <div
+          className={`relative inline-block transition-all duration-300 ${
+            editing ? "cursor-pointer" : ""
+          }`}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div
+            className={`relative ${
+              editing && isDragOver
+                ? `ring-4 ring-offset-2 rounded-full ${
+                    darkTheme
+                      ? "ring-blue-400 ring-offset-gray-900"
+                      : "ring-blue-500 ring-offset-white"
+                  }`
+                : ""
             }`}
-          />
+          >
+            <img
+              src={uploadUrl || preview}
+              alt="Profile Preview"
+              className={`w-32 h-32 rounded-full object-cover border-4 mx-auto transition-all duration-300 ${
+                darkTheme ? "border-gray-700" : "border-gray-300"
+              } ${editing && isDragOver ? "scale-105 opacity-80" : ""}`}
+            />
+
+            {/* Drag Overlay */}
+            {editing && isDragOver && (
+              <div
+                className={`absolute inset-0 rounded-full flex items-center justify-center ${
+                  darkTheme ? "bg-gray-900/80" : "bg-white/80"
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-2xl mb-1">📁</div>
+                  <div
+                    className={`text-xs font-medium ${
+                      darkTheme ? "text-blue-400" : "text-blue-600"
+                    }`}
+                  >
+                    Drop image
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {editing && (
             <>
-              <label className={`block mt-2 text-sm cursor-pointer hover:underline transition-colors duration-200 ${
-                darkTheme ? 'text-blue-400' : 'text-blue-600'
-              }`}>
+              <label
+                className={`block mt-2 text-sm cursor-pointer hover:underline transition-colors duration-200 ${
+                  darkTheme ? "text-blue-400" : "text-blue-600"
+                }`}
+              >
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
                   className="hidden"
                 />
-                Change photo
+                {isDragOver ? "Drop to upload" : "Change photo or drag & drop"}
               </label>
+
+              {/* Drag and Drop Help Text */}
+              {!isDragOver && (
+                <p
+                  className={`text-xs mt-1 ${
+                    darkTheme ? "text-gray-500" : "text-gray-400"
+                  }`}
+                >
+                  Drag image here or click to browse
+                </p>
+              )}
+
               {errors.image && (
-                <p className={`text-xs mt-1 ${darkTheme ? 'text-red-400' : 'text-red-600'}`}>
+                <p
+                  className={`text-xs mt-1 ${
+                    darkTheme ? "text-red-400" : "text-red-600"
+                  }`}
+                >
                   {errors.image}
                 </p>
               )}
@@ -232,11 +368,11 @@ export default function ProfileCard() {
           <div>
             <input
               className={`w-full p-2 rounded border transition-colors duration-200 ${
-                errors.name 
-                  ? 'border-red-500' 
-                  : darkTheme 
-                    ? 'bg-gray-800 border-gray-700 placeholder-gray-400' 
-                    : 'bg-gray-50 border-gray-300 placeholder-gray-500'
+                errors.name
+                  ? "border-red-500"
+                  : darkTheme
+                  ? "bg-gray-800 border-gray-700 placeholder-gray-400"
+                  : "bg-gray-50 border-gray-300 placeholder-gray-500"
               }`}
               placeholder="Full Name"
               value={name}
@@ -247,7 +383,11 @@ export default function ProfileCard() {
               disabled={!editing}
             />
             {errors.name && (
-              <p className={`text-xs mt-1 ${darkTheme ? 'text-red-400' : 'text-red-600'}`}>
+              <p
+                className={`text-xs mt-1 ${
+                  darkTheme ? "text-red-400" : "text-red-600"
+                }`}
+              >
                 {errors.name}
               </p>
             )}
@@ -255,9 +395,9 @@ export default function ProfileCard() {
 
           <textarea
             className={`w-full p-2 rounded border transition-colors duration-200 ${
-              darkTheme 
-                ? 'bg-gray-800 border-gray-700 placeholder-gray-400' 
-                : 'bg-gray-50 border-gray-300 placeholder-gray-500'
+              darkTheme
+                ? "bg-gray-800 border-gray-700 placeholder-gray-400"
+                : "bg-gray-50 border-gray-300 placeholder-gray-500"
             }`}
             placeholder="Short Bio"
             value={bio}
@@ -267,10 +407,17 @@ export default function ProfileCard() {
 
           {/* Compression Info */}
           {editing && (
-            <div className={`text-xs p-2 rounded ${
-              darkTheme ? 'bg-gray-800 text-gray-400' : 'bg-gray-50 text-gray-600'
-            }`}>
-              📦 Compression: {compressionEnabled ? 'ON (max 1MB, 600px)' : 'OFF (original size)'}
+            <div
+              className={`text-xs p-2 rounded ${
+                darkTheme
+                  ? "bg-gray-800 text-gray-400"
+                  : "bg-gray-50 text-gray-600"
+              }`}
+            >
+              📦 Compression:{" "}
+              {compressionEnabled
+                ? "ON (max 1MB, 600px)"
+                : "OFF (original size)"}
             </div>
           )}
 
@@ -281,33 +428,44 @@ export default function ProfileCard() {
                 disabled={loading}
                 className={`w-full py-2 rounded font-semibold transition-all duration-200 ${
                   loading
-                    ? (darkTheme ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-400 cursor-not-allowed')
-                    : (darkTheme ? 'bg-blue-600 hover:bg-blue-700 cursor-pointer' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer text-white')
+                    ? darkTheme
+                      ? "bg-gray-600 cursor-not-allowed"
+                      : "bg-gray-400 cursor-not-allowed"
+                    : darkTheme
+                    ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                    : "bg-blue-500 hover:bg-blue-600 cursor-pointer text-white"
                 }`}
               >
                 {loading ? "Saving..." : "Save Profile"}
               </button>
               {loading && (
                 <div className="space-y-2">
-                  <div className={`flex justify-between text-xs ${
-                    darkTheme ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
+                  <div
+                    className={`flex justify-between text-xs ${
+                      darkTheme ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
                     <span>Uploading...</span>
                     <span>{progress}%</span>
                   </div>
-                  <div className={`w-full h-3 rounded-full overflow-hidden ${
-                    darkTheme ? 'bg-gray-700' : 'bg-gray-200'
-                  }`}>
+                  <div
+                    className={`w-full h-3 rounded-full overflow-hidden ${
+                      darkTheme ? "bg-gray-700" : "bg-gray-200"
+                    }`}
+                  >
                     <div
                       className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-300 ease-out"
                       style={{ width: `${progress}%` }}
                     ></div>
                   </div>
                   {compressedSize && (
-                    <div className={`text-xs ${
-                      darkTheme ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      File size: {compressedSize} KB {!compressionEnabled && '(uncompressed)'}
+                    <div
+                      className={`text-xs ${
+                        darkTheme ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
+                      File size: {compressedSize} KB{" "}
+                      {!compressionEnabled && "(uncompressed)"}
                     </div>
                   )}
                 </div>
@@ -318,9 +476,9 @@ export default function ProfileCard() {
               type="button"
               onClick={() => setEditing(true)}
               className={`w-full py-2 rounded font-semibold cursor-pointer transition-all duration-200 ${
-                darkTheme 
-                  ? 'bg-gray-700 hover:bg-gray-600' 
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                darkTheme
+                  ? "bg-gray-700 hover:bg-gray-600"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-800"
               }`}
             >
               Edit Profile
@@ -329,16 +487,18 @@ export default function ProfileCard() {
         </form>
 
         {errors.submit && (
-          <p className={`text-sm text-center mt-2 ${
-            darkTheme ? 'text-red-400' : 'text-red-600'
-          }`}>
+          <p
+            className={`text-sm text-center mt-2 ${
+              darkTheme ? "text-red-400" : "text-red-600"
+            }`}
+          >
             {errors.submit}
           </p>
         )}
 
         {uploadUrl && !editing && (
           <div className="mt-4 text-sm">
-            <p className={darkTheme ? 'text-green-400' : 'text-green-600'}>
+            <p className={darkTheme ? "text-green-400" : "text-green-600"}>
               ✅ Image URL:
             </p>
             <a
@@ -346,9 +506,9 @@ export default function ProfileCard() {
               target="_blank"
               rel="noreferrer"
               className={`underline break-all transition-colors duration-200 ${
-                darkTheme 
-                  ? 'text-blue-400 hover:text-blue-300' 
-                  : 'text-blue-600 hover:text-blue-700'
+                darkTheme
+                  ? "text-blue-400 hover:text-blue-300"
+                  : "text-blue-600 hover:text-blue-700"
               }`}
             >
               {uploadUrl}
