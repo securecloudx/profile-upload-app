@@ -15,6 +15,8 @@ export default function ProfileCard() {
   const [uploadStartTime, setUploadStartTime] = useState(null);
   const [uploadDuration, setUploadDuration] = useState(null);
   const [compressedSize, setCompressedSize] = useState(null);
+  const [darkTheme, setDarkTheme] = useState(true);
+  const [compressionEnabled, setCompressionEnabled] = useState(true);
 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
@@ -34,20 +36,25 @@ export default function ProfileCard() {
     }
 
     try {
-      const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 600,
-        useWebWorker: true,
-      };
-      const compressedFile = await imageCompression(file, options);
-      setImage(compressedFile);
-      setCompressedSize((compressedFile.size / 1024).toFixed(1)); // in KB
+      let finalFile = file;
+      
+      if (compressionEnabled) {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 600,
+          useWebWorker: true,
+        };
+        finalFile = await imageCompression(file, options);
+      }
+      
+      setImage(finalFile);
+      setCompressedSize((finalFile.size / 1024).toFixed(1)); // in KB
 
-      setPreview(URL.createObjectURL(compressedFile));
+      setPreview(URL.createObjectURL(finalFile));
       setErrors((prev) => ({ ...prev, image: null }));
     } catch (err) {
-      console.error("Image compression failed:", err);
-      setErrors({ image: "Image compression failed." });
+      console.error("Image processing failed:", err);
+      setErrors({ image: compressionEnabled ? "Image compression failed." : "Image processing failed." });
     }
   };
 
@@ -134,14 +141,57 @@ export default function ProfileCard() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 w-full max-w-sm text-white text-center">
+    <div className={`flex-1 flex items-center justify-center p-4 transition-colors duration-300 ${darkTheme ? 'bg-gray-950' : 'bg-gray-50'}`}>
+      <div className={`rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center transition-all duration-300 ${
+        darkTheme 
+          ? 'bg-gray-900 text-white' 
+          : 'bg-white text-gray-900 border border-gray-200'
+      }`}>
+        {/* Settings Panel */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className={`text-lg font-semibold ${darkTheme ? 'text-white' : 'text-gray-900'}`}>
+            Profile Settings
+          </h2>
+          <div className="flex gap-2">
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setDarkTheme(!darkTheme)}
+              className={`p-2 rounded-lg transition-colors duration-200 ${
+                darkTheme 
+                  ? 'bg-gray-800 hover:bg-gray-700 text-yellow-400' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+              }`}
+              title={darkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            >
+              {darkTheme ? '☀️' : '🌙'}
+            </button>
+            
+            {/* Compression Toggle */}
+            <button
+              onClick={() => setCompressionEnabled(!compressionEnabled)}
+              className={`p-2 rounded-lg transition-colors duration-200 ${
+                compressionEnabled
+                  ? (darkTheme ? 'bg-green-800 hover:bg-green-700 text-green-300' : 'bg-green-100 hover:bg-green-200 text-green-600')
+                  : (darkTheme ? 'bg-gray-800 hover:bg-gray-700 text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-500')
+              }`}
+              title={compressionEnabled ? 'Compression: ON' : 'Compression: OFF'}
+            >
+              📦
+            </button>
+          </div>
+        </div>
         {errors.success && (
-          <div className="text-green-400 text-sm text-center mb-4 bg-green-900/20 border border-green-800 rounded-lg py-3 px-3">
+          <div className={`text-sm text-center mb-4 rounded-lg py-3 px-3 ${
+            darkTheme 
+              ? 'text-green-400 bg-green-900/20 border border-green-800' 
+              : 'text-green-700 bg-green-50 border border-green-200'
+          }`}>
             <p className="font-medium">{errors.success}</p>
             {uploadDuration && compressedSize && (
-              <div className="flex justify-between mt-2 text-xs text-green-300">
-                <span>📁 {compressedSize} KB</span>
+              <div className={`flex justify-between mt-2 text-xs ${
+                darkTheme ? 'text-green-300' : 'text-green-600'
+              }`}>
+                <span>📁 {compressedSize} KB {!compressionEnabled && '(uncompressed)'}</span>
                 <span>⏱️ {uploadDuration}s</span>
               </div>
             )}
@@ -152,11 +202,15 @@ export default function ProfileCard() {
           <img
             src={uploadUrl || preview}
             alt="Profile Preview"
-            className="w-32 h-32 rounded-full object-cover border-4 border-gray-700 mx-auto"
+            className={`w-32 h-32 rounded-full object-cover border-4 mx-auto transition-colors duration-300 ${
+              darkTheme ? 'border-gray-700' : 'border-gray-300'
+            }`}
           />
           {editing && (
             <>
-              <label className="block mt-2 text-sm text-blue-400 cursor-pointer hover:underline">
+              <label className={`block mt-2 text-sm cursor-pointer hover:underline transition-colors duration-200 ${
+                darkTheme ? 'text-blue-400' : 'text-blue-600'
+              }`}>
                 <input
                   type="file"
                   accept="image/*"
@@ -166,7 +220,9 @@ export default function ProfileCard() {
                 Change photo
               </label>
               {errors.image && (
-                <p className="text-red-400 text-xs mt-1">{errors.image}</p>
+                <p className={`text-xs mt-1 ${darkTheme ? 'text-red-400' : 'text-red-600'}`}>
+                  {errors.image}
+                </p>
               )}
             </>
           )}
@@ -175,9 +231,13 @@ export default function ProfileCard() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4 text-left">
           <div>
             <input
-              className={`w-full p-2 rounded bg-gray-800 border ${
-                errors.name ? "border-red-500" : "border-gray-700"
-              } placeholder-gray-400`}
+              className={`w-full p-2 rounded border transition-colors duration-200 ${
+                errors.name 
+                  ? 'border-red-500' 
+                  : darkTheme 
+                    ? 'bg-gray-800 border-gray-700 placeholder-gray-400' 
+                    : 'bg-gray-50 border-gray-300 placeholder-gray-500'
+              }`}
               placeholder="Full Name"
               value={name}
               onChange={(e) => {
@@ -187,46 +247,67 @@ export default function ProfileCard() {
               disabled={!editing}
             />
             {errors.name && (
-              <p className="text-red-400 text-xs mt-1">{errors.name}</p>
+              <p className={`text-xs mt-1 ${darkTheme ? 'text-red-400' : 'text-red-600'}`}>
+                {errors.name}
+              </p>
             )}
           </div>
 
           <textarea
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700 placeholder-gray-400"
+            className={`w-full p-2 rounded border transition-colors duration-200 ${
+              darkTheme 
+                ? 'bg-gray-800 border-gray-700 placeholder-gray-400' 
+                : 'bg-gray-50 border-gray-300 placeholder-gray-500'
+            }`}
             placeholder="Short Bio"
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             disabled={!editing}
           />
 
+          {/* Compression Info */}
+          {editing && (
+            <div className={`text-xs p-2 rounded ${
+              darkTheme ? 'bg-gray-800 text-gray-400' : 'bg-gray-50 text-gray-600'
+            }`}>
+              📦 Compression: {compressionEnabled ? 'ON (max 1MB, 600px)' : 'OFF (original size)'}
+            </div>
+          )}
+
           {editing ? (
             <>
               <button
                 type="submit"
                 disabled={loading}
-                className={`${
+                className={`w-full py-2 rounded font-semibold transition-all duration-200 ${
                   loading
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                } w-full py-2 rounded font-semibold`}
+                    ? (darkTheme ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-400 cursor-not-allowed')
+                    : (darkTheme ? 'bg-blue-600 hover:bg-blue-700 cursor-pointer' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer text-white')
+                }`}
               >
                 {loading ? "Saving..." : "Save Profile"}
               </button>
               {loading && (
                 <div className="space-y-2">
-                  <div className="flex justify-between text-xs text-gray-400">
+                  <div className={`flex justify-between text-xs ${
+                    darkTheme ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                     <span>Uploading...</span>
                     <span>{progress}%</span>
                   </div>
-                  <div className="w-full bg-gray-700 h-3 rounded-full overflow-hidden">
+                  <div className={`w-full h-3 rounded-full overflow-hidden ${
+                    darkTheme ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}>
                     <div
                       className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-300 ease-out"
                       style={{ width: `${progress}%` }}
                     ></div>
                   </div>
                   {compressedSize && (
-                    <div className="text-xs text-gray-400">
-                      File size: {compressedSize} KB
+                    <div className={`text-xs ${
+                      darkTheme ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      File size: {compressedSize} KB {!compressionEnabled && '(uncompressed)'}
                     </div>
                   )}
                 </div>
@@ -236,7 +317,11 @@ export default function ProfileCard() {
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="bg-gray-700 hover:bg-gray-600 w-full py-2 rounded font-semibold cursor-pointer"
+              className={`w-full py-2 rounded font-semibold cursor-pointer transition-all duration-200 ${
+                darkTheme 
+                  ? 'bg-gray-700 hover:bg-gray-600' 
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+              }`}
             >
               Edit Profile
             </button>
@@ -244,19 +329,27 @@ export default function ProfileCard() {
         </form>
 
         {errors.submit && (
-          <p className="text-red-400 text-sm text-center mt-2">
+          <p className={`text-sm text-center mt-2 ${
+            darkTheme ? 'text-red-400' : 'text-red-600'
+          }`}>
             {errors.submit}
           </p>
         )}
 
         {uploadUrl && !editing && (
           <div className="mt-4 text-sm">
-            <p className="text-green-400">✅ Image URL:</p>
+            <p className={darkTheme ? 'text-green-400' : 'text-green-600'}>
+              ✅ Image URL:
+            </p>
             <a
               href={uploadUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-blue-400 underline break-all"
+              className={`underline break-all transition-colors duration-200 ${
+                darkTheme 
+                  ? 'text-blue-400 hover:text-blue-300' 
+                  : 'text-blue-600 hover:text-blue-700'
+              }`}
             >
               {uploadUrl}
             </a>
