@@ -684,7 +684,7 @@ export default function ProfileCard() {
                       darkTheme ? "text-gray-400" : "text-gray-600"
                     }`}
                   >
-                    <span>Uploading...</span>
+                    <span>Saving...</span>
                     <span>{progress}%</span>
                   </div>
                   <div
