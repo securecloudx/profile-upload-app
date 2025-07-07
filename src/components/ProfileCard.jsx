@@ -11,24 +11,58 @@ export default function ProfileCard() {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // const handleImageChange = async (e) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
 
-    try {
-      const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 600,
-        useWebWorker: true,
-      };
-      const compressedFile = await imageCompression(file, options);
-      setImage(compressedFile);
-      setPreview(URL.createObjectURL(compressedFile));
-    } catch (err) {
-      console.error("Image compression failed:", err);
-      alert("Image compression failed.");
-    }
-  };
+  //   try {
+  //     const options = {
+  //       maxSizeMB: 1,
+  //       maxWidthOrHeight: 600,
+  //       useWebWorker: true,
+  //     };
+  //     const compressedFile = await imageCompression(file, options);
+  //     setImage(compressedFile);
+  //     setPreview(URL.createObjectURL(compressedFile));
+  //   } catch (err) {
+  //     console.error("Image compression failed:", err);
+  //     alert("Image compression failed.");
+  //   }
+  // };
+
+  const handleImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // ✅ File type validation
+  const validTypes = ["image/jpeg", "image/png"];
+  if (!validTypes.includes(file.type)) {
+    alert("Only JPEG or PNG images are allowed.");
+    return;
+  }
+
+  // ✅ File size validation (limit: 2MB)
+  const maxSizeMB = 2; 
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  if (file.size > maxSizeBytes) {
+    alert("Image is too large. Max size is 2MB.");
+    return;
+  }
+
+  try {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 600,
+      useWebWorker: true,
+    };
+    const compressedFile = await imageCompression(file, options);
+    setImage(compressedFile);
+    setPreview(URL.createObjectURL(compressedFile));
+  } catch (err) {
+    console.error("Image compression failed:", err);
+    alert("Image compression failed.");
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
