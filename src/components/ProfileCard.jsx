@@ -22,6 +22,9 @@ export default function ProfileCard() {
   const processImageFile = async (file) => {
     if (!file) return;
 
+    // Clear any existing success messages when user uploads a new image
+    setErrors((prev) => ({ ...prev, success: null }));
+
     const validTypes = ["image/jpeg", "image/png"];
     if (!validTypes.includes(file.type)) {
       setErrors({ image: "Only JPEG or PNG images are allowed." });
@@ -379,6 +382,8 @@ export default function ProfileCard() {
               onChange={(e) => {
                 setName(e.target.value);
                 if (errors.name) setErrors((prev) => ({ ...prev, name: null }));
+                if (errors.success)
+                  setErrors((prev) => ({ ...prev, success: null }));
               }}
               disabled={!editing}
             />
@@ -401,7 +406,11 @@ export default function ProfileCard() {
             }`}
             placeholder="Short Bio"
             value={bio}
-            onChange={(e) => setBio(e.target.value)}
+            onChange={(e) => {
+              setBio(e.target.value);
+              if (errors.success)
+                setErrors((prev) => ({ ...prev, success: null }));
+            }}
             disabled={!editing}
           />
 
@@ -474,7 +483,13 @@ export default function ProfileCard() {
           ) : (
             <button
               type="button"
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                setEditing(true);
+                // Clear success message and reset upload state when entering edit mode
+                setErrors({});
+                setUploadDuration(null);
+                setProgress(0);
+              }}
               className={`w-full py-2 rounded font-semibold cursor-pointer transition-all duration-200 ${
                 darkTheme
                   ? "bg-gray-700 hover:bg-gray-600"
