@@ -1,11 +1,14 @@
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
+import defaultAvatar from "../assets/default-avatar.jpg";
+
+
 
 export default function ProfileCard() {
   const [name, setName] = useState("Jane Doe");
   const [bio, setBio] = useState("Cloud Security learner on SecureCloudX");
   const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState("/default-avatar.jpg");
+  const [preview, setPreview] = useState(defaultAvatar);
   const [uploadUrl, setUploadUrl] = useState("");
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
