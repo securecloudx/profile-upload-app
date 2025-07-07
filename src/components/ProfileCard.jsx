@@ -12,24 +12,6 @@ export default function ProfileCard() {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
 
-  // const handleImageChange = async (e) => {
-  //   const file = e.target.files[0];
-  //   if (!file) return;
-
-  //   try {
-  //     const options = {
-  //       maxSizeMB: 1,
-  //       maxWidthOrHeight: 600,
-  //       useWebWorker: true,
-  //     };
-  //     const compressedFile = await imageCompression(file, options);
-  //     setImage(compressedFile);
-  //     setPreview(URL.createObjectURL(compressedFile));
-  //   } catch (err) {
-  //     console.error("Image compression failed:", err);
-  //     alert("Image compression failed.");
-  //   }
-  // };
 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
