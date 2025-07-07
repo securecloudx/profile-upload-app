@@ -147,5 +147,5 @@ The application includes comprehensive error handling for:
 5. Open a Pull Request
 
 ---
-
+If you find this project interesting, consider giving it a star⭐
 Made with ❤️ using React and Azure
