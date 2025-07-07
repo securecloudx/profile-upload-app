@@ -2,8 +2,6 @@ import { useState } from "react";
 import imageCompression from "browser-image-compression";
 import defaultAvatar from "../assets/default-avatar.jpg";
 
-
-
 export default function ProfileCard() {
   const [name, setName] = useState("Jane Doe");
   const [bio, setBio] = useState("Cloud Security learner on SecureCloudX");
@@ -34,38 +32,38 @@ export default function ProfileCard() {
   // };
 
   const handleImageChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // ✅ File type validation
-  const validTypes = ["image/jpeg", "image/png"];
-  if (!validTypes.includes(file.type)) {
-    alert("Only JPEG or PNG images are allowed.");
-    return;
-  }
+    // ✅ File type validation
+    const validTypes = ["image/jpeg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      alert("Only JPEG or PNG images are allowed.");
+      return;
+    }
 
-  // ✅ File size validation (limit: 2MB)
-  const maxSizeMB = 2; 
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-  if (file.size > maxSizeBytes) {
-    alert("Image is too large. Max size is 2MB.");
-    return;
-  }
+    // ✅ File size validation (limit: 2MB)
+    const maxSizeMB = 2;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      alert("Image is too large. Max size is 2MB.");
+      return;
+    }
 
-  try {
-    const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 600,
-      useWebWorker: true,
-    };
-    const compressedFile = await imageCompression(file, options);
-    setImage(compressedFile);
-    setPreview(URL.createObjectURL(compressedFile));
-  } catch (err) {
-    console.error("Image compression failed:", err);
-    alert("Image compression failed.");
-  }
-};
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 600,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+      setImage(compressedFile);
+      setPreview(URL.createObjectURL(compressedFile));
+    } catch (err) {
+      console.error("Image compression failed:", err);
+      alert("Image compression failed.");
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -131,7 +129,7 @@ export default function ProfileCard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+    <div className="flex-1 flex items-center justify-center p-4">
       <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 w-full max-w-sm text-white text-center">
         <div className="relative inline-block">
           <img
@@ -174,7 +172,9 @@ export default function ProfileCard() {
                 type="submit"
                 disabled={loading}
                 className={`${
-                  loading ? "bg-gray-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                  loading
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                 } w-full py-2 rounded font-semibold`}
               >
                 {loading ? "Saving..." : "Save Profile"}

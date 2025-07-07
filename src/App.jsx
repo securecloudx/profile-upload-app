@@ -1,9 +1,13 @@
+import Footer from "./components/Footer";
 import ProfileForm from "./components/ProfileCard";
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <ProfileForm />
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      <main className="flex-1 flex">
+        <ProfileForm />
+      </main>
+      <Footer />
     </div>
   );
 }
