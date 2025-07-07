@@ -232,29 +232,6 @@ The application includes comprehensive error handling for:
 - Upload duration tracking and display
 - Success confirmation with detailed statistics
 
-## 🎛️ Controls & Interface
-
-### Settings Panel
-
-Located at the top of the profile card with three toggle buttons:
-
-- **🌙/☀️ Theme Toggle**: Switch between dark and light themes
-- **📦 Compression Toggle**: Enable/disable image compression with visual feedback
-- **🗑️ Reset Button**: Clear all profile data with confirmation dialog
-
-### Upload Interface
-
-- **📷 Profile Image**: Click to view current image or uploaded URL
-- **✏️ Edit Pencil**: Click to select new image (appears in edit mode)
-- **Drag & Drop Zone**: Visual feedback when dragging files over the image area
-- **Progress Bar**: Animated progress with percentage and file size during upload
-
-### Form Controls
-
-- **Edit Profile Button**: Enables form editing and image upload
-- **Save Profile Button**: Validates and saves all changes with upload
-- **Auto-clear**: Success messages and validation errors clear when making changes
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -264,8 +241,6 @@ Located at the top of the profile card with three toggle buttons:
 5. Open a Pull Request
 
 ---
-
-**🎉 New in this version**: localStorage persistence, drag-and-drop upload, theme switcher, file size comparison, and enhanced UX!
 
 If you find this project interesting, consider giving it a star⭐
 
