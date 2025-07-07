@@ -5,21 +5,27 @@ A modern React application for creating and managing user profiles with image up
 ## ✨ Features
 
 - **Profile Management**: Create and edit user profiles with name and bio
-- **Image Upload**: Upload and compress profile images
+- **Image Upload**: Upload and compress profile images with drag-and-drop support
 - **Azure Integration**: Seamless integration with Azure Blob Storage
-- **Progress Tracking**: Real-time upload progress indicator
-- **Image Compression**: Automatic image optimization for better performance
-- **Responsive Design**: Modern dark theme UI built with Tailwind CSS
-- **Preview Functionality**: Live preview of profile images before upload
+- **Progress Tracking**: Real-time upload progress with file size and duration display
+- **Image Compression**: Automatic image optimization with toggle control and size comparison
+- **Theme Switcher**: Dark/light theme toggle with persistent preferences
+- **Instant Preview**: Live preview of profile images with immediate feedback
+- **File Size Comparison**: Shows original vs compressed file sizes with savings percentage
+- **Data Persistence**: All profile data and preferences persist across browser reloads
+- **Drag & Drop**: Intuitive drag-and-drop image upload with visual feedback
+- **Responsive Design**: Modern UI built with Tailwind CSS and smooth animations
+- **Reset Functionality**: One-click profile reset with confirmation dialog
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 19.1.0
-- **Build Tool**: Vite 7.0.0
-- **Styling**: Tailwind CSS 4.1.11
-- **Image Processing**: browser-image-compression
-- **Cloud Storage**: Azure Blob Storage
-- **Code Quality**: ESLint
+- **Frontend**: React 19.1.0 with Hooks (useState, useEffect)
+- **Build Tool**: Vite 7.0.0 with Hot Module Replacement
+- **Styling**: Tailwind CSS 4.1.11 with dark/light theme support
+- **Image Processing**: browser-image-compression with web workers
+- **Local Storage**: Browser localStorage for data persistence
+- **Cloud Storage**: Azure Blob Storage with SAS token authentication
+- **Code Quality**: ESLint with modern JavaScript standards
 
 ## 📋 Prerequisites
 
@@ -70,20 +76,37 @@ and you can view it in your browser.
 
 The main component that handles:
 
-- Profile image upload and compression
-- Form validation and submission
-- Progress tracking during upload
-- Azure Blob Storage integration
-- Edit/view mode toggling
+- **Profile Data Management**: Name, bio, and image with localStorage persistence
+- **Image Upload & Processing**: Drag-and-drop upload with compression and instant preview
+- **File Size Analysis**: Original vs compressed size comparison with savings calculation
+- **Theme Management**: Dark/light theme toggle with user preference persistence
+- **Upload Progress**: Real-time progress tracking with file size and duration metrics
+- **Azure Blob Storage**: Direct upload integration with SAS token authentication
+- **State Management**: Smart state handling with automatic localStorage sync
+- **Error Handling**: Comprehensive validation and user-friendly error messages
+- **UI/UX Features**: Smooth animations, visual feedback, and responsive design
 
-**Key Features:**
+**Key Interactions:**
 
-- Image compression (max 1MB, 600px max dimension)
-- Progress bar during upload
-- Error handling for failed uploads
-- Responsive design
+- **Edit Mode**: Click "Edit Profile" to enable form fields and image upload
+- **Image Upload**: Click pencil icon or drag-and-drop images for upload
+- **Theme Toggle**: Sun/moon icon to switch between dark and light themes
+- **Compression Toggle**: Package icon to enable/disable image compression
+- **Reset Profile**: Trash icon to clear all data with confirmation dialog
+- **Instant Feedback**: Real-time preview and immediate visual responses
 
 ## ⚙️ Configuration
+
+### Data Persistence
+
+The app automatically saves and restores:
+
+- **Profile Information**: Name, bio, and profile image URL
+- **User Preferences**: Theme (dark/light) and compression settings
+- **Upload Statistics**: File sizes, compression savings, and upload duration
+- **Success Messages**: Recent upload confirmations (expire after 5 minutes)
+
+All data is stored in browser localStorage and automatically loaded on page refresh.
 
 ### Azure Blob Storage Setup
 
@@ -99,29 +122,69 @@ The main component that handles:
 
 ### Image Compression Settings
 
-The app automatically compresses images with these settings:
+The app includes a compression toggle with these default settings:
 
-- Maximum file size: 1MB
-- Maximum dimensions: 600px (width or height)
-- Uses web workers for better performance
+- **When Enabled**: Maximum file size: 1MB, Maximum dimensions: 600px
+- **When Disabled**: Original file size preserved
+- **Performance**: Uses web workers for non-blocking compression
+- **Feedback**: Shows original vs compressed size comparison with savings percentage
+
+### Theme Configuration
+
+- **Default Theme**: Dark mode
+- **Toggle Control**: Sun/moon icon in settings panel
+- **Persistence**: Theme preference saved in localStorage
+- **Smooth Transitions**: 300ms duration for all theme changes
 
 ## 🔧 Customization
 
-### Styling
+### User Interface
 
-The app uses Tailwind CSS for styling. You can customize the appearance by modifying the classes in the components or extending the Tailwind configuration.
+The app features a modern, responsive design with:
 
-### Image Upload Settings
+- **Theme System**: Dark and light themes with user toggle
+- **Settings Panel**: Theme, compression, and reset controls
+- **Progress Indicators**: Animated upload progress with percentage and file info
+- **Visual Feedback**: Drag-and-drop zones, hover effects, and state transitions
+- **Error Handling**: Inline validation messages and user-friendly error states
 
-Modify the compression options in `ProfileCard.jsx`:
+### Upload Behavior
+
+Customize the upload experience by modifying settings in `ProfileCard.jsx`:
 
 ```javascript
+// Image compression options
 const options = {
   maxSizeMB: 1, // Maximum file size in MB
   maxWidthOrHeight: 600, // Maximum dimension in pixels
   useWebWorker: true, // Use web workers for compression
 };
+
+// File validation
+const maxSizeMB = 2; // Maximum upload size before compression
+const validTypes = ["image/jpeg", "image/png"]; // Allowed file types
 ```
+
+### Data Persistence
+
+Control what data persists by modifying the localStorage keys:
+
+```javascript
+// Profile data keys
+const profileKeys = [
+  "profileName", "profileBio", "profilePreview", "profileUploadUrl",
+  "profileDarkTheme", "profileCompressionEnabled", "profileUploadDuration",
+  "profileOriginalSize", "profileCompressedSize", "profileSuccessMessage"
+];
+```
+
+### Styling
+
+The app uses Tailwind CSS for styling. You can customize the appearance by:
+
+- Modifying component classes for colors, spacing, and animations
+- Extending the Tailwind configuration for custom design tokens
+- Adjusting theme-specific color schemes in the component conditionals
 
 ## 🚨 Important Security Notes
 
@@ -133,10 +196,64 @@ const options = {
 
 The application includes comprehensive error handling for:
 
-- Image compression failures
-- Upload failures
-- Network errors
-- Validation errors
+- **Image Validation**: File type and size validation with clear error messages
+- **Compression Failures**: Graceful fallback when image compression fails
+- **Upload Errors**: Network and server error handling with retry suggestions
+- **Form Validation**: Real-time validation for required fields
+- **localStorage Issues**: Fallback to default values when storage fails
+- **Browser Compatibility**: Graceful degradation for unsupported features
+
+## 🎮 User Experience Features
+
+### Drag & Drop
+
+- Visual feedback when dragging files over the upload area
+- Prevents browser default file opening behavior
+- Works only in edit mode for better UX
+
+### File Size Intelligence
+
+- Shows original file size before compression
+- Displays compressed file size after processing
+- Calculates and shows savings in KB and percentage
+- Adapts display based on compression settings
+
+### Persistent State
+
+- All form data survives page refreshes
+- Theme and compression preferences remembered
+- Recent upload success messages persist (5-minute expiry)
+- One-click reset to clear all stored data
+
+### Progress Tracking
+
+- Real-time upload progress bar with animation
+- File size display during upload
+- Upload duration tracking and display
+- Success confirmation with detailed statistics
+
+## 🎛️ Controls & Interface
+
+### Settings Panel
+
+Located at the top of the profile card with three toggle buttons:
+
+- **🌙/☀️ Theme Toggle**: Switch between dark and light themes
+- **📦 Compression Toggle**: Enable/disable image compression with visual feedback
+- **🗑️ Reset Button**: Clear all profile data with confirmation dialog
+
+### Upload Interface
+
+- **📷 Profile Image**: Click to view current image or uploaded URL
+- **✏️ Edit Pencil**: Click to select new image (appears in edit mode)
+- **Drag & Drop Zone**: Visual feedback when dragging files over the image area
+- **Progress Bar**: Animated progress with percentage and file size during upload
+
+### Form Controls
+
+- **Edit Profile Button**: Enables form editing and image upload
+- **Save Profile Button**: Validates and saves all changes with upload
+- **Auto-clear**: Success messages and validation errors clear when making changes
 
 ## 🤝 Contributing
 
@@ -147,5 +264,9 @@ The application includes comprehensive error handling for:
 5. Open a Pull Request
 
 ---
+
+**🎉 New in this version**: localStorage persistence, drag-and-drop upload, theme switcher, file size comparison, and enhanced UX!
+
 If you find this project interesting, consider giving it a star⭐
-Made with ❤️ using React and Azure
+
+Made with ❤️ using React, Azure, and modern web technologies
